@@ -13,6 +13,8 @@
     "@hookform/resolvers": "^5.2.2",
     "autoprefixer": "^10.5.0",
     "axios": "^1.15.1",
+    "gh-pages": "^6.3.0",
+    "i": "^0.3.7",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^1.8.0",
     "postcss": "^8.5.10",
