@@ -51,6 +51,7 @@ export const OSManagement: React.FC = () => {
 
     const handleUpdateStatus = async (id: number, newStatus: string) => {
         try {
+            console.log(error)
             const observacao = `Status alterado para ${newStatus} pelo sistema`;
             await osService.updateOSStatus(id, newStatus, observacao);
             setMessage({ type: 'success', text: `Status atualizado para ${newStatus}` });

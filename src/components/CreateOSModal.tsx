@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Plus, Trash2, Package } from 'lucide-react';
+import { X, Plus, Trash2} from 'lucide-react';
 import { Input } from './Input';
 import { osService, productService } from '../services/api';
 import type { Product } from '../types/auth.types';

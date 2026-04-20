@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Calendar, User, Phone, Mail, Wrench, Package, DollarSign, Clock } from 'lucide-react';
+import { X, Calendar, User, Phone, Mail, Wrench, Package, Clock } from 'lucide-react';
 import type { OrdemServico } from '../types/auth.types';
 
 interface OSDetailsModalProps {
