@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-black-dark via-gray-dark to-black-main min-h-screen;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border border-gray-700 bg-black-main text-white placeholder-gray-400 focus:border-red-main focus:ring-2 focus:ring-red-main/30 transition-all duration-200 outline-none;
+  }
+  
+  .btn-primary {
+    @apply w-full bg-red-main text-white py-3 rounded-lg font-semibold hover:bg-red-dark transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-red-main/25;
+  }
+  
+  .btn-secondary {
+    @apply w-full bg-gray-700 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-200;
+  }
+  
+  .card {
+    @apply bg-black-main/90 backdrop-blur-sm rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-700;
+  }
+  
+  .error-message {
+    @apply text-red-main text-sm mt-1 animate-shake;
+  }
+}
+
+@media (max-width: 1024px) {
+  .slide-section {
+    display: none;
+  }
+}
+
+/* Animações personalizadas */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-left {
+  animation: slideInFromLeft 0.5s ease-out;
+}
