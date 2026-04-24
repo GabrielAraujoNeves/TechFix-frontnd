@@ -5,17 +5,20 @@ import { UserManagement } from '../components/UserManagement';
 import { OSManagement } from '../components/OSManagement';
 import { useAuth } from '../contexts/AuthContext';
 import { productService } from '../services/api';
-import { 
-  Package, 
-  TrendingDown, 
-  AlertTriangle, 
+import {
+  Package,
+  TrendingDown,
+  AlertTriangle,
   DollarSign,
   ShoppingCart,
   Users,
   Calendar,
   ArrowUp,
   Crown,
-  User
+  User,
+  Clock,
+  PlusCircle,
+  Edit3
 } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
@@ -50,15 +53,15 @@ export const Dashboard: React.FC = () => {
         productService.getLowStockProducts(),
         productService.getOutOfStockProducts()
       ]);
-      
+
       const productsArray = Array.isArray(allProducts) ? allProducts : [];
       const lowStockArray = Array.isArray(lowStock) ? lowStock : [];
       const outOfStockArray = Array.isArray(outOfStock) ? outOfStock : [];
-      
-      const totalValue = productsArray.reduce((sum, product) => 
+
+      const totalValue = productsArray.reduce((sum, product) =>
         sum + (product.precoAtacado * product.quantidadeEstoque), 0
       );
-      
+
       setStats({
         totalProducts: productsArray.length,
         lowStock: lowStockArray.length,
@@ -82,18 +85,86 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  // Função auxiliar para formatar tempo relativo (ex: "Há 5 minutos")
+  const formatRelativeTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Agora mesmo';
+    if (diffMins < 60) return `Há ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+    if (diffHours < 24) return `Há ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+    return `Há ${diffDays} dia${diffDays > 1 ? 's' : ''}`;
+  };
+
   const loadRecentActivities = async () => {
-    setRecentActivities([
-      { id: 1, action: 'Produto adicionado', product: 'Galaxy S24', user: 'Admin', time: 'Há 5 minutos', type: 'add' },
-      { id: 2, action: 'Estoque atualizado', product: 'iPhone 15', user: 'Admin', time: 'Há 1 hora', type: 'update' },
-      { id: 3, action: 'Venda realizada', product: 'Notebook Dell', user: 'Vendedor', time: 'Há 2 horas', type: 'sale' },
-      { id: 4, action: 'Produto removido', product: 'Mouse Logitech', user: 'Admin', time: 'Há 3 horas', type: 'remove' },
-    ]);
+    try {
+      // Busca o último produto criado e o último atualizado em paralelo
+      const [lastCreated, lastUpdated] = await Promise.all([
+        productService.getLastCreatedProduct(),
+        productService.getLastUpdatedProduct()
+      ]);
+
+      const activities = [];
+
+      if (lastCreated && lastCreated.product && lastCreated.cadastradoEm) {
+        activities.push({
+          id: 'created',
+          action: 'Produto adicionado',
+          product: lastCreated.product.nome,
+          time: formatRelativeTime(lastCreated.cadastradoEm),
+          user: 'Sistema',
+          type: 'add',
+          timestamp: new Date(lastCreated.cadastradoEm).getTime()
+        });
+      }
+
+      if (lastUpdated && lastUpdated.product) {
+        const updateDate = lastUpdated.atualizadoEm || lastUpdated.product.updatedAt;
+        if (updateDate) {
+          activities.push({
+            id: 'updated',
+            action: 'Produto atualizado',
+            product: lastUpdated.product.nome,
+            time: formatRelativeTime(updateDate),
+            user: 'Sistema',
+            type: 'update',
+            timestamp: new Date(updateDate).getTime()
+          });
+        }
+      }
+
+      // Ordena por timestamp decrescente (mais recente primeiro)
+      activities.sort((a, b) => b.timestamp - a.timestamp);
+
+      // Se quiser exibir apenas as 2 mais recentes, fica show. Se não houver dados, mostra mock
+      if (activities.length === 0) {
+        // Fallback mock (como você já tinha)
+        setRecentActivities([
+          { id: 1, action: 'Produto adicionado', product: 'Galaxy S24', user: 'Admin', time: 'Há 5 minutos', type: 'add', timestamp: Date.now() - 300000 },
+          { id: 2, action: 'Estoque atualizado', product: 'iPhone 15', user: 'Admin', time: 'Há 1 hora', type: 'update', timestamp: Date.now() - 3600000 },
+          { id: 3, action: 'Venda realizada', product: 'Notebook Dell', user: 'Vendedor', time: 'Há 2 horas', type: 'sale', timestamp: Date.now() - 7200000 },
+          { id: 4, action: 'Produto removido', product: 'Mouse Logitech', user: 'Admin', time: 'Há 3 horas', type: 'remove', timestamp: Date.now() - 10800000 },
+        ]);
+      } else {
+        setRecentActivities(activities);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar atividades recentes:', error);
+      // Fallback mock em caso de erro
+      setRecentActivities([
+        { id: 1, action: 'Produto adicionado', product: 'Galaxy S24', user: 'Admin', time: 'Há 5 minutos', type: 'add', timestamp: Date.now() - 300000 },
+        { id: 2, action: 'Estoque atualizado', product: 'iPhone 15', user: 'Admin', time: 'Há 1 hora', type: 'update', timestamp: Date.now() - 3600000 },
+      ]);
+    }
   };
 
   const renderContent = () => {
     console.log('Renderizando conteúdo para tab:', activeTab);
-    
+
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -117,9 +188,8 @@ export const Dashboard: React.FC = () => {
                       <p className="text-gray-400">
                         {isAdmin ? 'Você está no modo Administrador' : 'Você está no modo Visualização'}
                       </p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        isAdmin ? 'bg-red-main/20 text-red-main' : 'bg-blue-600/20 text-blue-400'
-                      }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isAdmin ? 'bg-red-main/20 text-red-main' : 'bg-blue-600/20 text-blue-400'
+                        }`}>
                         {isAdmin ? 'ADMIN' : 'USER'}
                       </span>
                     </div>
@@ -158,7 +228,7 @@ export const Dashboard: React.FC = () => {
               </div>
 
               {/* Estoque Baixo */}
-              <div 
+              <div
                 className="bg-black-main/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:shadow-lg hover:shadow-yellow-500/10 transition-all duration-300 cursor-pointer"
                 onClick={() => stats.lowStock > 0 && setActiveTab('low-stock')}
               >
@@ -180,7 +250,7 @@ export const Dashboard: React.FC = () => {
               </div>
 
               {/* Sem Estoque */}
-              <div 
+              <div
                 className="bg-black-main/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300 cursor-pointer"
                 onClick={() => stats.outOfStock > 0 && setActiveTab('out-of-stock')}
               >
@@ -246,41 +316,47 @@ export const Dashboard: React.FC = () => {
                 </div>
               )}
 
-              {/* Atividades Recentes */}
+              {/* Atividades Recentes - Agora com dados reais */}
               <div className={`bg-black-main/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 ${!isAdmin ? 'lg:col-span-2' : ''}`}>
-                <h3 className="text-lg font-bold text-white mb-4">Atividades Recentes</h3>
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <Clock size={18} className="text-red-main" />
+                  Últimas Atividades
+                </h3>
                 <div className="space-y-3">
-                  {recentActivities.map((activity) => (
-                    <div key={activity.id} className="flex items-center justify-between p-3 bg-black-dark rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-2 rounded-lg ${
-                          activity.type === 'add' ? 'bg-green-600/20' :
-                          activity.type === 'update' ? 'bg-blue-600/20' :
-                          activity.type === 'sale' ? 'bg-purple-600/20' : 'bg-red-600/20'
-                        }`}>
-                          {activity.type === 'add' && <Package className="w-4 h-4 text-green-400" />}
-                          {activity.type === 'update' && <TrendingDown className="w-4 h-4 text-blue-400" />}
-                          {activity.type === 'sale' && <ShoppingCart className="w-4 h-4 text-purple-400" />}
-                          {activity.type === 'remove' && <AlertTriangle className="w-4 h-4 text-red-400" />}
+                  {recentActivities.length === 0 ? (
+                    <p className="text-gray-400 text-center py-4">Nenhuma atividade recente</p>
+                  ) : (
+                    recentActivities.map((activity, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-black-dark rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`p-2 rounded-lg ${activity.type === 'add' ? 'bg-green-600/20' :
+                              activity.type === 'update' ? 'bg-blue-600/20' :
+                                activity.type === 'sale' ? 'bg-purple-600/20' : 'bg-red-600/20'
+                            }`}>
+                            {activity.type === 'add' && <PlusCircle className="w-4 h-4 text-green-400" />}
+                            {activity.type === 'update' && <Edit3 className="w-4 h-4 text-blue-400" />}
+                            {activity.type === 'sale' && <ShoppingCart className="w-4 h-4 text-purple-400" />}
+                            {activity.type === 'remove' && <AlertTriangle className="w-4 h-4 text-red-400" />}
+                          </div>
+                          <div>
+                            <p className="text-white text-sm font-semibold">{activity.action}</p>
+                            <p className="text-gray-400 text-xs">{activity.product}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-white text-sm font-semibold">{activity.action}</p>
-                          <p className="text-gray-400 text-xs">{activity.product}</p>
+                        <div className="text-right">
+                          <p className="text-gray-400 text-xs">{activity.time}</p>
+                          <p className="text-gray-500 text-xs">por {activity.user}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-gray-400 text-xs">{activity.time}</p>
-                        <p className="text-gray-500 text-xs">por {activity.user}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Alertas e Notificações */}
             {(stats.lowStock > 0 || stats.outOfStock > 0) && (
-              <div 
+              <div
                 className="bg-yellow-600/10 border border-yellow-600/30 rounded-xl p-4 cursor-pointer hover:bg-yellow-600/20 transition-all duration-300"
                 onClick={() => {
                   if (stats.lowStock > 0) setActiveTab('low-stock');
@@ -307,7 +383,7 @@ export const Dashboard: React.FC = () => {
                 <div>
                   <h4 className="text-blue-400 font-semibold">Dica Rápida</h4>
                   <p className="text-gray-300 text-sm">
-                    {isAdmin 
+                    {isAdmin
                       ? '✅ Você tem permissão de administrador. Use o menu "Adicionar Produto" para incluir novos itens ao estoque.'
                       : '👁️ Você está visualizando o estoque. Entre em contato com o administrador para solicitar alterações.'}
                   </p>
@@ -357,7 +433,7 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="flex h-screen bg-gradient-to-br from-black-dark via-gray-dark to-black-main overflow-hidden">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      
+
       <main className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-8">
           {renderContent()}
