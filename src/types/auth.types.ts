@@ -1,3 +1,4 @@
+// ========== MODELOS PRINCIPAIS ==========
 export interface User {
   id: number;
   name: string;
@@ -16,6 +17,16 @@ export interface RegisterCredentials {
   name: string;
   email: string;
   password: string;
+  nomeEmpresa: string;
+  cnpj: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  telefoneComercial: string;
+  segmentoAtuacao: string;
+  planType: PlanType;
+  paymentPeriod: PaymentPeriod;
+  paymentMethod: PaymentMethod;
 }
 
 export interface LoginResponse {
@@ -28,6 +39,9 @@ export interface LoginResponse {
 export interface RegisterResponse {
   message: string;
   success: boolean;
+  userId?: number;
+  companyId?: number;
+  subscriptionId?: number;
 }
 
 export interface VerifyTokenResponse {
@@ -36,6 +50,7 @@ export interface VerifyTokenResponse {
   message: string;
 }
 
+// ========== PRODUTOS ==========
 export interface Product {
   id: number;
   nome: string;
@@ -63,6 +78,7 @@ export interface UpdateStockDTO {
   quantidade: number;
 }
 
+// ========== USUÁRIOS (ADMIN) ==========
 export interface UpdateUserDTO {
   name?: string;
   email?: string;
@@ -74,6 +90,7 @@ export interface UsersResponse {
   total: number;
 }
 
+// ========== ORDEM DE SERVIÇO ==========
 export interface OSItem {
   id?: number;
   produtoId: number;
@@ -86,7 +103,6 @@ export interface OSItem {
   valorConserto?: number;
   subtotal?: number;
   observacao?: string | null;
-  // Campos antigos para compatibilidade
   nomeProduto?: string;
   precoUnitario?: number;
 }
@@ -101,7 +117,7 @@ export interface OrdemServico {
   marca: string;
   problema: string;
   observacoes?: string;
-    status: 'PENDENTE' | 'CONSERTANDO' | 'FINALIZADO' | 'CANCELADO';
+  status: 'PENDENTE' | 'CONSERTANDO' | 'FINALIZADO' | 'CANCELADO';
   valorTotalConserto: number;
   valorTotalPecas: number;
   valorTotalGeral: number;
@@ -115,7 +131,7 @@ export interface OrdemServico {
 export interface CreateOSDTO {
   clienteNome: string;
   clienteTelefone: string;
-  clienteEmail?: string;   // opcional
+  clienteEmail?: string;
   modelo: string;
   marca: string;
   problema: string;
@@ -126,4 +142,53 @@ export interface CreateOSDTO {
 export interface OSStatusUpdateDTO {
   status: string;
   observacao?: string;
+}
+
+// ========== PLANOS E ASSINATURA (sem `enum`, usando type + const) ==========
+export const PlanType = {
+  BASIC: 'BASIC',
+  PRO: 'PRO',
+  PREMIUM: 'PREMIUM'
+} as const;
+export type PlanType = typeof PlanType[keyof typeof PlanType];
+
+export const PaymentPeriod = {
+  MONTHLY: 'MONTHLY',
+  QUARTERLY: 'QUARTERLY',
+  ANNUAL: 'ANNUAL'
+} as const;
+export type PaymentPeriod = typeof PaymentPeriod[keyof typeof PaymentPeriod];
+
+export const PaymentMethod = {
+  PIX: 'PIX',
+  CREDIT_CARD: 'CREDIT_CARD',
+  DEBIT_CARD: 'DEBIT_CARD'
+} as const;
+export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  nomeEmpresa: string;
+  cnpj: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  telefoneComercial: string;
+  segmentoAtuacao: string;
+  planType: PlanType;
+  paymentPeriod: PaymentPeriod;
+  paymentMethod: PaymentMethod;
+}
+
+export interface SubscriptionResponse {
+  id: number;
+  planType: string;
+  paymentPeriod: string;
+  status: string;
+  paymentMethod: string;
+  startDate: string;
+  endDate: string;
+  message?: string;
 }

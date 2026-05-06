@@ -1,14 +1,19 @@
 import axios from 'axios';
-import type { 
-  RegisterResponse, 
-  VerifyTokenResponse, 
-  Product, 
+import type {
+  RegisterResponse,
+  VerifyTokenResponse,
+  Product,
   CreateProductDTO,
   User,
   UpdateUserDTO,
-  UsersResponse, 
+  UsersResponse,
   OrdemServico,
-  CreateOSDTO
+  CreateOSDTO,
+  PaymentPeriod,
+  SubscriptionResponse,
+  PlanType,
+  PaymentMethod,
+  RegisterRequest
 } from '../types/auth.types';
 
 export interface LoginResponse {
@@ -19,7 +24,7 @@ export interface LoginResponse {
 }
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -54,8 +59,8 @@ export const authService = {
     const response = await api.post<LoginResponse>('/auth/login', { email, password });
     return response.data;
   },
-  register: async (name: string, email: string, password: string): Promise<RegisterResponse> => {
-    const response = await api.post<RegisterResponse>('/auth/register', { name, email, password });
+  register: async (userData: RegisterRequest): Promise<RegisterResponse> => {
+    const response = await api.post<RegisterResponse>('/auth/register', userData);
     return response.data;
   },
   verifyToken: async (): Promise<VerifyTokenResponse> => {
@@ -69,7 +74,6 @@ export const productService = {
     const response = await api.post('/products/admin/create', productData);
     return response.data;
   },
-
   getAllProducts: async (): Promise<Product[]> => {
     try {
       const response = await api.get('/products/all');
@@ -82,22 +86,18 @@ export const productService = {
       return [];
     }
   },
-
   updateProduct: async (productId: number, productData: Partial<CreateProductDTO>): Promise<Product> => {
     const response = await api.put(`/products/admin/update/${productId}`, productData);
     return response.data;
   },
-
   addStock: async (productId: number, quantidade: number): Promise<Product> => {
     const response = await api.put(`/products/admin/add-stock/${productId}?quantidade=${quantidade}`);
     return response.data;
   },
-
   removeStock: async (productId: number, quantidade: number): Promise<Product> => {
     const response = await api.put(`/products/admin/remove-stock/${productId}?quantidade=${quantidade}`);
     return response.data;
   },
-
   getLowStockProducts: async (): Promise<Product[]> => {
     try {
       const response = await api.get('/products/low-stock');
@@ -109,7 +109,6 @@ export const productService = {
       return [];
     }
   },
-
   getOutOfStockProducts: async (): Promise<Product[]> => {
     try {
       const response = await api.get('/products/out-of-stock');
@@ -121,12 +120,9 @@ export const productService = {
       return [];
     }
   },
-
   deleteProduct: async (productId: number): Promise<void> => {
     await api.delete(`/products/admin/delete/${productId}`);
   },
-
-  // ========== NOVOS MÉTODOS ==========
   getLastCreatedProduct: async (): Promise<{ product: Product; cadastradoEm: string } | null> => {
     try {
       const response = await api.get('/products/last-created');
@@ -136,7 +132,6 @@ export const productService = {
       return null;
     }
   },
-
   getLastUpdatedProduct: async (): Promise<{ product: Product; atualizadoEm: string } | null> => {
     try {
       const response = await api.get('/products/last-updated');
@@ -224,6 +219,26 @@ export const osService = {
   },
   deleteOS: async (id: number): Promise<{ message: string }> => {
     const response = await api.delete(`/os/admin/delete/${id}`);
+    return response.data;
+  },
+};
+
+export const subscriptionService = {
+  createSubscription: async (data: {
+    planType: PlanType;
+    paymentPeriod: PaymentPeriod;
+    paymentMethod: PaymentMethod;
+  }): Promise<SubscriptionResponse> => {
+    const response = await api.post('/subscription/create', data);
+    return response.data;
+  },
+  confirmPayment: async (subscriptionId: number): Promise<SubscriptionResponse> => {
+    const response = await api.put(`/subscription/${subscriptionId}/confirm-payment`);
+    return response.data;
+  },
+
+  getCurrentSubscription: async (): Promise<SubscriptionResponse> => {
+    const response = await api.get('/subscription/current');
     return response.data;
   },
 };
