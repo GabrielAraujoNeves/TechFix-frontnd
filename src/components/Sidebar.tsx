@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Package, 
-  TrendingDown, 
-  AlertTriangle, 
-  PlusCircle, 
+import {
+  Package,
+  TrendingDown,
+  AlertTriangle,
+  PlusCircle,
   LogOut,
   Menu,
   X,
@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Box,
   Users,
-  ClipboardList
+  ClipboardList,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -102,8 +103,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onProd
               onClick={() => handleTabChange('dashboard')}
               className={`
                 w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
-                ${activeTab === 'dashboard' 
-                  ? 'bg-red-main text-white' 
+                ${activeTab === 'dashboard'
+                  ? 'bg-red-main text-white'
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }
               `}
@@ -111,6 +112,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onProd
               <BarChart3 size={20} />
               <span>Dashboard</span>
             </button>
+            {isAdmin && (
+              <button
+                onClick={() => handleTabChange('settings')}
+                className={`
+                  w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
+                   ${activeTab === 'settings'
+                    ? 'bg-red-main text-white'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                  }`}
+              >
+                <Settings size={20} />
+                <span>Configurações</span>
+              </button>
+            )}
 
             {/* Gerenciar Usuários - Apenas ADMIN */}
             {isAdmin && (
@@ -118,8 +133,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onProd
                 onClick={() => handleTabChange('users')}
                 className={`
                   w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
-                  ${activeTab === 'users' 
-                    ? 'bg-red-main text-white' 
+                  ${activeTab === 'users'
+                    ? 'bg-red-main text-white'
                     : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                   }
                 `}
@@ -134,8 +149,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onProd
               onClick={() => handleTabChange('os')}
               className={`
                 w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200
-                ${activeTab === 'os' 
-                  ? 'bg-red-main text-white' 
+                ${activeTab === 'os'
+                  ? 'bg-red-main text-white'
                   : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }
               `}
@@ -162,15 +177,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onProd
                 </div>
                 {isEstoqueOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
               </button>
-              
+
               {isEstoqueOpen && (
                 <div className="ml-6 mt-2 space-y-1">
                   <button
                     onClick={() => handleTabChange('products')}
                     className={`
                       w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 text-sm
-                      ${activeTab === 'products' 
-                        ? 'bg-red-main/20 text-red-main' 
+                      ${activeTab === 'products'
+                        ? 'bg-red-main/20 text-red-main'
                         : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                       }
                     `}
@@ -178,13 +193,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onProd
                     <Package size={16} />
                     <span>Todos os Produtos</span>
                   </button>
-                  
+
                   <button
                     onClick={() => handleTabChange('low-stock')}
                     className={`
                       w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 text-sm
-                      ${activeTab === 'low-stock' 
-                        ? 'bg-red-main/20 text-red-main' 
+                      ${activeTab === 'low-stock'
+                        ? 'bg-red-main/20 text-red-main'
                         : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                       }
                     `}
@@ -192,13 +207,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, onProd
                     <TrendingDown size={16} />
                     <span>Estoque Baixo</span>
                   </button>
-                  
+
                   <button
                     onClick={() => handleTabChange('out-of-stock')}
                     className={`
                       w-full flex items-center space-x-3 px-4 py-2 rounded-lg transition-all duration-200 text-sm
-                      ${activeTab === 'out-of-stock' 
-                        ? 'bg-red-main/20 text-red-main' 
+                      ${activeTab === 'out-of-stock'
+                        ? 'bg-red-main/20 text-red-main'
                         : 'text-gray-400 hover:bg-gray-800 hover:text-white'
                       }
                     `}

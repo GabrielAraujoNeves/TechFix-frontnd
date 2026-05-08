@@ -3,6 +3,7 @@ import { Sidebar } from '../components/Sidebar';
 import { ProductsPage } from './ProductsPage';
 import { UserManagement } from '../components/UserManagement';
 import { OSManagement } from '../components/OSManagement';
+import { SettingsPage } from './Settings';
 import { useAuth } from '../contexts/AuthContext';
 import { productService } from '../services/api';
 import {
@@ -40,7 +41,6 @@ export const Dashboard: React.FC = () => {
     loadRecentActivities();
   }, []);
 
-  // Debug para ver qual tab está ativa
   useEffect(() => {
     console.log('ActiveTab mudou para:', activeTab);
   }, [activeTab]);
@@ -85,8 +85,8 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Função auxiliar para formatar tempo relativo (ex: "Há 5 minutos")
   const formatRelativeTime = (dateString: string): string => {
+    if (!dateString) return 'Data inválida';
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -102,7 +102,6 @@ export const Dashboard: React.FC = () => {
 
   const loadRecentActivities = async () => {
     try {
-      // Busca o último produto criado e o último atualizado em paralelo
       const [lastCreated, lastUpdated] = await Promise.all([
         productService.getLastCreatedProduct(),
         productService.getLastUpdatedProduct()
@@ -137,12 +136,9 @@ export const Dashboard: React.FC = () => {
         }
       }
 
-      // Ordena por timestamp decrescente (mais recente primeiro)
       activities.sort((a, b) => b.timestamp - a.timestamp);
 
-      // Se quiser exibir apenas as 2 mais recentes, fica show. Se não houver dados, mostra mock
       if (activities.length === 0) {
-        // Fallback mock (como você já tinha)
         setRecentActivities([
           { id: 1, action: 'Produto adicionado', product: 'Galaxy S24', user: 'Admin', time: 'Há 5 minutos', type: 'add', timestamp: Date.now() - 300000 },
           { id: 2, action: 'Estoque atualizado', product: 'iPhone 15', user: 'Admin', time: 'Há 1 hora', type: 'update', timestamp: Date.now() - 3600000 },
@@ -154,7 +150,6 @@ export const Dashboard: React.FC = () => {
       }
     } catch (error) {
       console.error('Erro ao carregar atividades recentes:', error);
-      // Fallback mock em caso de erro
       setRecentActivities([
         { id: 1, action: 'Produto adicionado', product: 'Galaxy S24', user: 'Admin', time: 'Há 5 minutos', type: 'add', timestamp: Date.now() - 300000 },
         { id: 2, action: 'Estoque atualizado', product: 'iPhone 15', user: 'Admin', time: 'Há 1 hora', type: 'update', timestamp: Date.now() - 3600000 },
@@ -188,8 +183,9 @@ export const Dashboard: React.FC = () => {
                       <p className="text-gray-400">
                         {isAdmin ? 'Você está no modo Administrador' : 'Você está no modo Visualização'}
                       </p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${isAdmin ? 'bg-red-main/20 text-red-main' : 'bg-blue-600/20 text-blue-400'
-                        }`}>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        isAdmin ? 'bg-red-main/20 text-red-main' : 'bg-blue-600/20 text-blue-400'
+                      }`}>
                         {isAdmin ? 'ADMIN' : 'USER'}
                       </span>
                     </div>
@@ -316,7 +312,7 @@ export const Dashboard: React.FC = () => {
                 </div>
               )}
 
-              {/* Atividades Recentes - Agora com dados reais */}
+              {/* Atividades Recentes */}
               <div className={`bg-black-main/50 backdrop-blur-sm rounded-xl border border-gray-700 p-6 ${!isAdmin ? 'lg:col-span-2' : ''}`}>
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                   <Clock size={18} className="text-red-main" />
@@ -329,10 +325,11 @@ export const Dashboard: React.FC = () => {
                     recentActivities.map((activity, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 bg-black-dark rounded-lg">
                         <div className="flex items-center space-x-3">
-                          <div className={`p-2 rounded-lg ${activity.type === 'add' ? 'bg-green-600/20' :
-                              activity.type === 'update' ? 'bg-blue-600/20' :
-                                activity.type === 'sale' ? 'bg-purple-600/20' : 'bg-red-600/20'
-                            }`}>
+                          <div className={`p-2 rounded-lg ${
+                            activity.type === 'add' ? 'bg-green-600/20' :
+                            activity.type === 'update' ? 'bg-blue-600/20' :
+                            activity.type === 'sale' ? 'bg-purple-600/20' : 'bg-red-600/20'
+                          }`}>
                             {activity.type === 'add' && <PlusCircle className="w-4 h-4 text-green-400" />}
                             {activity.type === 'update' && <Edit3 className="w-4 h-4 text-blue-400" />}
                             {activity.type === 'sale' && <ShoppingCart className="w-4 h-4 text-purple-400" />}
@@ -384,8 +381,8 @@ export const Dashboard: React.FC = () => {
                   <h4 className="text-blue-400 font-semibold">Dica Rápida</h4>
                   <p className="text-gray-300 text-sm">
                     {isAdmin
-                      ? '✅ Você tem permissão de administrador. Use o menu "Adicionar Produto" para incluir novos itens ao estoque.'
-                      : '👁️ Você está visualizando o estoque. Entre em contato com o administrador para solicitar alterações.'}
+                      ? 'Você tem permissão de administrador. Use o menu "Adicionar Produto" para incluir novos itens ao estoque.'
+                      : 'Você está visualizando o estoque. Entre em contato com o administrador para solicitar alterações.'}
                   </p>
                 </div>
               </div>
@@ -393,11 +390,11 @@ export const Dashboard: React.FC = () => {
           </div>
         );
       case 'users':
-        console.log('Renderizando UserManagement');
         return <UserManagement />;
       case 'os':
-        console.log('Renderizando OSManagement');
         return <OSManagement />;
+      case 'settings':
+        return <SettingsPage />;
       case 'products':
         return <ProductsPage filterType="all" />;
       case 'add-product':
@@ -407,7 +404,6 @@ export const Dashboard: React.FC = () => {
       case 'out-of-stock':
         return <ProductsPage filterType="out-of-stock" />;
       default:
-        console.log('Tab não encontrada, retornando default');
         return <ProductsPage filterType="all" />;
     }
   };
@@ -433,7 +429,6 @@ export const Dashboard: React.FC = () => {
   return (
     <div className="flex h-screen bg-gradient-to-br from-black-dark via-gray-dark to-black-main overflow-hidden">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
       <main className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-8">
           {renderContent()}

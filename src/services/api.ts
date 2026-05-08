@@ -13,7 +13,8 @@ import type {
   SubscriptionResponse,
   PlanType,
   PaymentMethod,
-  RegisterRequest
+  RegisterRequest,
+  Subscription
 } from '../types/auth.types';
 
 export interface LoginResponse {
@@ -241,6 +242,32 @@ export const subscriptionService = {
     const response = await api.get('/subscription/current');
     return response.data;
   },
+
+  upgradePlan: async (data: { newPlan: PlanType; period: PaymentPeriod; paymentMethod: PaymentMethod }): Promise<Subscription> => {
+    const response = await api.post('/subscription/upgrade', data);
+    return response.data;
+  },
 };
+
+export const companyUserService = {
+  getCompanyUsers: async (): Promise<{ total: number; users: User[] }> => {
+    const response = await api.get('/company/users');
+    return response.data;
+  },
+  addUser: async (userData: { name: string; email: string; password: string }): Promise<User> => {
+    const response = await api.post('/company/users', userData);
+    return response.data;
+  },
+  updateUser: async (userId: number, userData: { name: string; email: string }): Promise<User> => {
+    const response = await api.put(`/company/users/${userId}`, userData);
+    return response.data;
+  },
+  deleteUser: async (userId: number): Promise<{ message: string }> => {
+    const response = await api.delete(`/company/users/${userId}`);
+    return response.data;
+  },
+};
+
+
 
 export default api;
