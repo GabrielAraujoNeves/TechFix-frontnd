@@ -166,6 +166,13 @@ export const PaymentMethod = {
 } as const;
 export type PaymentMethod = typeof PaymentMethod[keyof typeof PaymentMethod];
 
+export interface CardInfo {
+  cardNumber: string;
+  cardholderName: string;
+  expiryDate: string;   // formato "MM/AA"
+  cvv: string;
+}
+
 export interface RegisterRequest {
   name: string;
   email: string;
@@ -180,6 +187,14 @@ export interface RegisterRequest {
   planType: PlanType;
   paymentPeriod: PaymentPeriod;
   paymentMethod: PaymentMethod;
+  cardInfo?: CardInfo;   // ← novo campo opcional
+}
+
+export interface UpgradeRequest {
+  newPlan: PlanType;
+  period: PaymentPeriod;
+  paymentMethod: PaymentMethod;
+  cardInfo?: CardInfo;
 }
 
 // Substitua as interfaces SubscriptionResponse e Subscription por esta:
@@ -196,3 +211,28 @@ export interface Subscription {
 
 // Use o mesmo nome nos serviços (Subscription)
 export type SubscriptionResponse = Subscription;
+
+
+export interface CompanyData {
+  id: number;
+  nomeEmpresa: string;
+  cnpj: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  telefoneComercial: string;
+  segmentoAtuacao: string;
+  segmentoCode: string;
+  edificacaoId?: string;
+  ownerId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PaymentInfoResponse {
+  paymentMethod: string;
+  cardDetails?: {
+    last4: string;
+    brand: string;
+  };
+}
