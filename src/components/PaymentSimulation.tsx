@@ -1,5 +1,6 @@
+// src/components/PaymentSimulation.tsx
 import React, { useState } from 'react';
-import type { SubscriptionResponse, PlanType, PaymentPeriod, PaymentMethod } from '../types/auth.types';
+import type { SubscriptionResponse, PlanType, PaymentPeriod, PaymentMethod, CardInfo } from '../types/auth.types';
 import { subscriptionService } from '../services/api';
 import { AlertCircle } from 'lucide-react';
 
@@ -8,14 +9,14 @@ interface PaymentSimulationProps {
   paymentPeriod: PaymentPeriod;
   paymentMethod: PaymentMethod;
   amount: number;
-  subscriptionId?: number; // novo: ID da assinatura pendente
-  onConfirm: (subscription: SubscriptionResponse) => void;
+  subscriptionId?: number;
+  onConfirm: (subscription: SubscriptionResponse, cardInfo?: CardInfo) => void;
   onBack: () => void;
 }
 
 export const PaymentSimulation: React.FC<PaymentSimulationProps> = ({
-  planType,
-  paymentPeriod,
+  planType: _planType,
+  paymentPeriod: _paymentPeriod,
   paymentMethod,
   amount,
   subscriptionId,
@@ -27,36 +28,31 @@ export const PaymentSimulation: React.FC<PaymentSimulationProps> = ({
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [simulatedPayment, setSimulatedPayment] = useState(false);
 
-  const handleCreateAndConfirm = async (skipPixWait = false) => {
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardholderName, setCardholderName] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvv, setCvv] = useState('');
+
+  const handleConfirm = async () => {
+    if ((paymentMethod === 'CREDIT_CARD' || paymentMethod === 'DEBIT_CARD') && !cardNumber.trim()) {
+      setError('Preencha os dados do cartão');
+      return;
+    }
+
     setLoading(true);
     setError('');
     try {
-      // Se já temos um subscriptionId, apenas confirma, sem criar nova
       if (subscriptionId) {
-        // Para PIX, se não skip, mostrar QR simulado
-        if (paymentMethod === 'PIX' && !skipPixWait) {
+        if (paymentMethod === 'PIX') {
           setQrCode('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=simulated-pix-payment');
           setSimulatedPayment(true);
           setLoading(false);
           return;
         }
         const confirmed = await subscriptionService.confirmPayment(subscriptionId);
-        onConfirm(confirmed);
+        onConfirm(confirmed, undefined);
       } else {
-        // Fallback: cria nova assinatura (fluxo antigo)
-        const subscription = await subscriptionService.createSubscription({
-          planType,
-          paymentPeriod,
-          paymentMethod,
-        });
-        if (paymentMethod === 'PIX' && !skipPixWait) {
-          setQrCode('https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=simulated-pix-payment');
-          setSimulatedPayment(true);
-          setLoading(false);
-          return;
-        }
-        const confirmed = await subscriptionService.confirmPayment(subscription.id);
-        onConfirm(confirmed);
+        throw new Error('subscriptionId não fornecido para confirmação de pagamento');
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao processar pagamento');
@@ -71,15 +67,7 @@ export const PaymentSimulation: React.FC<PaymentSimulationProps> = ({
     try {
       if (subscriptionId) {
         const confirmed = await subscriptionService.confirmPayment(subscriptionId);
-        onConfirm(confirmed);
-      } else {
-        const subscription = await subscriptionService.createSubscription({
-          planType,
-          paymentPeriod,
-          paymentMethod,
-        });
-        const confirmed = await subscriptionService.confirmPayment(subscription.id);
-        onConfirm(confirmed);
+        onConfirm(confirmed, undefined);
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao confirmar PIX');
@@ -88,22 +76,51 @@ export const PaymentSimulation: React.FC<PaymentSimulationProps> = ({
     }
   };
 
+  const handleCardPayment = async () => {
+    const cardInfo: CardInfo = {
+      cardNumber: cardNumber.replace(/\s/g, ''),
+      cardholderName,
+      expiryDate,
+      cvv,
+    };
+    if (cardNumber.length < 15 || cvv.length < 3 || !expiryDate.match(/^\d{2}\/\d{2}$/)) {
+      setError('Verifique os dados do cartão');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      if (subscriptionId) {
+        const confirmed = await subscriptionService.confirmPayment(subscriptionId);
+        onConfirm(confirmed, cardInfo);
+      } else {
+        throw new Error('subscriptionId não fornecido');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Erro ao processar pagamento');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-white">Pagamento</h2>
+
       {error && (
         <div className="bg-red-main/10 border border-red-main/50 text-red-main p-3 rounded-lg flex gap-2 items-center">
           <AlertCircle size={18} />
           <span>{error}</span>
         </div>
       )}
+
       {paymentMethod === 'PIX' && !simulatedPayment && (
         <div className="bg-black-dark rounded-lg p-6 text-center">
           <p className="text-gray-300 mb-4">Escaneie o QR Code para pagar via PIX</p>
           {qrCode ? (
             <img src={qrCode} alt="QR Code PIX" className="mx-auto w-48 h-48" />
           ) : (
-            <button onClick={() => handleCreateAndConfirm()} disabled={loading} className="btn-primary w-full">
+            <button onClick={handleConfirm} disabled={loading} className="btn-primary w-full">
               {loading ? 'Gerando...' : 'Gerar QR Code PIX'}
             </button>
           )}
@@ -114,23 +131,58 @@ export const PaymentSimulation: React.FC<PaymentSimulationProps> = ({
           )}
         </div>
       )}
-      {paymentMethod !== 'PIX' && (
+
+      {(paymentMethod === 'CREDIT_CARD' || paymentMethod === 'DEBIT_CARD') && (
         <div className="bg-black-dark rounded-lg p-6">
-          <h3 className="text-white font-semibold mb-4">Dados do cartão (simulação)</h3>
+          <h3 className="text-white font-semibold mb-4">
+            {paymentMethod === 'CREDIT_CARD' ? 'Dados do Cartão de Crédito' : 'Dados do Cartão de Débito'}
+          </h3>
           <div className="space-y-4">
-            <input type="text" placeholder="Número do cartão" className="input-field" defaultValue="4111 1111 1111 1111" />
+            <input
+              type="text"
+              placeholder="Número do cartão"
+              className="input-field"
+              value={cardNumber}
+              onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16))}
+              maxLength={16}
+            />
+            <input
+              type="text"
+              placeholder="Nome impresso no cartão"
+              className="input-field"
+              value={cardholderName}
+              onChange={(e) => setCardholderName(e.target.value.toUpperCase())}
+            />
             <div className="grid grid-cols-2 gap-3">
-              <input type="text" placeholder="Validade" className="input-field" defaultValue="12/28" />
-              <input type="text" placeholder="CVV" className="input-field" defaultValue="123" />
+              <input
+                type="text"
+                placeholder="Validade (MM/AA)"
+                className="input-field"
+                value={expiryDate}
+                onChange={(e) => {
+                  let val = e.target.value.replace(/\D/g, '');
+                  if (val.length >= 2) val = val.slice(0,2) + '/' + val.slice(2,4);
+                  setExpiryDate(val.slice(0,5));
+                }}
+                maxLength={5}
+              />
+              <input
+                type="password"
+                placeholder="CVV"
+                className="input-field"
+                value={cvv}
+                onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0,4))}
+                maxLength={4}
+              />
             </div>
-            <input type="text" placeholder="Nome no cartão" className="input-field" defaultValue="CLIENTE TESTE" />
           </div>
         </div>
       )}
+
       <div className="flex gap-3">
         <button onClick={onBack} className="flex-1 btn-secondary">Voltar</button>
         {paymentMethod !== 'PIX' && (
-          <button onClick={() => handleCreateAndConfirm(true)} disabled={loading} className="flex-1 btn-primary">
+          <button onClick={handleCardPayment} disabled={loading} className="flex-1 btn-primary">
             {loading ? 'Processando...' : `Pagar R$ ${amount.toFixed(2)}`}
           </button>
         )}
