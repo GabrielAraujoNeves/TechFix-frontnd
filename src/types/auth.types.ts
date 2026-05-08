@@ -182,13 +182,17 @@ export interface RegisterRequest {
   paymentMethod: PaymentMethod;
 }
 
-export interface SubscriptionResponse {
+// Substitua as interfaces SubscriptionResponse e Subscription por esta:
+export interface Subscription {
   id: number;
-  planType: string;
-  paymentPeriod: string;
-  status: string;
+  planType: 'BASIC' | 'PRO' | 'PREMIUM';
+  paymentPeriod: 'MONTHLY' | 'QUARTERLY' | 'ANNUAL';
+  status: 'ACTIVE' | 'PENDING_PAYMENT' | 'EXPIRED' | 'CANCELED';
   paymentMethod: string;
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
   message?: string;
 }
+
+// Use o mesmo nome nos serviços (Subscription)
+export type SubscriptionResponse = Subscription;
